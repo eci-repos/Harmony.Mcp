@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Mcp.ClientConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "stdio"
+    }
+  }
+}

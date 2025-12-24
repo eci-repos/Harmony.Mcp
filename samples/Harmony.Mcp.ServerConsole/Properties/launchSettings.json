@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "Mcp.Console_Server": {
+      "commandName": "Project",
+      "commandLineArgs": "-server"
+    },
+    "Mcp.Console_Client": {
+      "commandName": "Project"
+    }
+  }
+}
