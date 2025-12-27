@@ -82,7 +82,8 @@ public class McpClientMain
       }
 
       KernelIO.Log.WriteLine(
-         $"Initialized: {init.ServerInfo.Name} v{init.ServerInfo.Version} (proto {init.ProtocolVersion})\n");
+         $"Initialized: {init.ServerInfo.Name} v{init.ServerInfo.Version} "
+        + "(proto {init.ProtocolVersion})\n");
 
       // Discover tools
       var tools = await client.ListToolsAsync();

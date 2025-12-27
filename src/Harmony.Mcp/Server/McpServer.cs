@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Harmony.Mcp.Server.Protocols;
 
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Server;
@@ -210,12 +211,18 @@ public sealed class McpServer
       // Expect headers like: Content-Length: N\r\n...\r\n\r\n
       string? line;
       int contentLength = -1;
+      string? contentTypeHeader = null;
+
       while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
       {
          if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
          {
             var val = line.Substring("Content-Length:".Length).Trim();
             if (int.TryParse(val, out var n)) contentLength = n;
+         }
+         else if (line.StartsWith("Content-Type:", StringComparison.OrdinalIgnoreCase))
+         {
+            contentTypeHeader = line.Substring("Content-Type:".Length).Trim();
          }
          // ignore other headers
       }
@@ -237,6 +244,14 @@ public sealed class McpServer
             read += r;
          }
          var body = new string(buffer, 0, read);
+
+         if (!HrfValidator.ValidateContentTypeHeader(contentTypeHeader, body))
+         {
+            KernelIO.Error.WriteLine(
+               $"[server] Invalid Content-Type header: {contentTypeHeader}");
+            return (false, string.Empty);
+         }
+
          return (true, body);
       }
       finally

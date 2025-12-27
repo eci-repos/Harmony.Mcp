@@ -4,9 +4,25 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Harmony Mcp</Title>
+    <Version>1.0.0</Version>
+    <Authors>Eduardo Sobrino</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageOutputPath>c:\NuGetLocalFeed</PackageOutputPath>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Harmony.Format.Core" Version="1.0.1" />
+    <PackageReference Include="Harmony.Format.SemanticKernel" Version="1.0.1" />
     <PackageReference Include="Harmony.SemanticKernel.Core" Version="1.0.1" />
   </ItemGroup>
 
