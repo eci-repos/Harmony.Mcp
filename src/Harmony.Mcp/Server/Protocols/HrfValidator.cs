@@ -9,28 +9,6 @@ namespace Harmony.Mcp.Server.Protocols;
 
 internal static class HrfValidator
 {
-   public const string HRF_MEDIA_TYPE = "application/harmony+json";
-   public const string HRF_SCRIPT_MEDIA_TYPE = "application/harmony-script+json";
-
-   private static readonly HashSet<string> HrfMediaTypes = new(StringComparer.OrdinalIgnoreCase)
-   {
-      HRF_MEDIA_TYPE,
-      HRF_SCRIPT_MEDIA_TYPE
-   };
-
-   public static string NormalizeMediaType(string contentType)
-   {
-      if (string.IsNullOrWhiteSpace(contentType)) 
-         return string.Empty;
-      var idx = contentType.IndexOf(';');
-      return (idx >= 0 ? contentType.Substring(0, idx) : contentType).Trim();
-   }
-
-   public static bool IsHrfMediaType(string contentType)
-   {
-      var media = NormalizeMediaType(contentType);
-      return HrfMediaTypes.Contains(media);
-   }
 
    /// <summary>
    /// Perform lightweight HRF validation on the JSON body according to the declared HRF variant.
@@ -49,9 +27,9 @@ internal static class HrfValidator
          using var doc = JsonDocument.Parse(body);
          var root = doc.RootElement;
 
-         var media = NormalizeMediaType(contentType);
+         var media = HrfMediaType.NormalizeMediaType(contentType);
 
-         if (string.Equals(media, HRF_SCRIPT_MEDIA_TYPE, StringComparison.OrdinalIgnoreCase))
+         if (string.Equals(media, HrfMediaType.HRF_SCRIPT_MEDIA_TYPE, StringComparison.OrdinalIgnoreCase))
          {
             if (root.TryGetProperty("vars", out _) || root.TryGetProperty("steps", out _))
                return true;
@@ -96,7 +74,7 @@ internal static class HrfValidator
    {
       // If Content-Type indicates HRF, perform conservative validation
       if (!string.IsNullOrEmpty(contentTypeHeader) &&
-         IsHrfMediaType(contentTypeHeader))
+         HrfMediaType.IsHrfContentMediaType(contentType: contentTypeHeader))
       {
          if (body == null || !ValidateJsonForMediaType(contentTypeHeader, body))
          {

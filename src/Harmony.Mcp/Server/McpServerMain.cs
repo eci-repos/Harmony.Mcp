@@ -1,18 +1,12 @@
-﻿using Harmony.SemanticKernel.Core;
-using Harmony.Mcp.Client;
+﻿
 using Harmony.Mcp.Models;
-using Microsoft.Extensions.AI;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using System;
-using System.Collections.Generic;
+using Harmony.SemanticKernel.Core;
+using Harmony.Mcp.Server.Hosting;
+
 using System.IO.Pipes;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Server;
@@ -51,6 +45,7 @@ public class McpServerMain
       //   --pipe mcp-sk-pipe
       string? tcpBind = null;
       string? pipeName = null;
+      string? httpsBind = null;
 
       for (int i = 0; i < args.Length; i++)
       {
@@ -58,19 +53,35 @@ public class McpServerMain
          {
             case "--tcp": tcpBind = args[++i]; break;
             case "--pipe": pipeName = args[++i]; break;
+            case "--https": // HTTPS transport
+               httpsBind = (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+                   ? args[++i]
+                   : "https://localhost:5001";
+               break;
+            case "--http": // HTTP transport (for dev/testing)
+               httpsBind = (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+                   ? args[++i]
+                   : "http://localhost:5000";
+               break;
          }
       }
 
       var server = new McpServer(kernelHost, jsonOptions, registry);
 
+      // HTTPS/HTTP mode
+      if (httpsBind != null)
+      {
+         await McpServerHttp.RunHttpAsync(server, httpsBind, jsonOptions);
+         return 0;
+      }
       if (tcpBind != null)
       {
-         await RunTcpAsync(server, tcpBind);
+         await McpServerTcp.RunTcpAsync(server, tcpBind);
          return 0;
       }
       if (pipeName != null)
       {
-         await RunPipeAsync(server, pipeName);
+         await McpServerPipe.RunPipeAsync(server, pipeName);
          return 0;
       }
 
@@ -79,52 +90,6 @@ public class McpServerMain
       await server.RunStdIoAsync();
 
       return 0;
-   }
-
-   private static async Task RunTcpAsync(McpServer server, string bind)
-   {
-      // bind format: ":51377" or "127.0.0.1:51377"
-      var parts = bind.Split(':', StringSplitOptions.RemoveEmptyEntries);
-      IPAddress ip = IPAddress.Loopback; int port;
-      if (parts.Length == 1)
-      {
-         port = int.Parse(parts[0]);
-      }
-      else
-      {
-         ip = IPAddress.Parse(parts[0]);
-         port = int.Parse(parts[1]);
-      }
-
-      var listener = new TcpListener(ip, port);
-      listener.Start();
-      Console.WriteLine($"[server] TCP listening on {ip}:{port}");
-
-      while (true)
-      {
-         var client = await listener.AcceptTcpClientAsync();
-         _ = Task.Run(async () =>
-         {
-            using var stream = client.GetStream();
-            await server.RunOnStreamAsync(stream, stream);
-            client.Close();
-         });
-      }
-   }
-
-   private static async Task RunPipeAsync(McpServer server, string pipeName)
-   {
-      Console.WriteLine($"[server] NamedPipe listening on '{pipeName}'");
-      while (true)
-      {
-         using var pipe = new NamedPipeServerStream(
-            pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
-            PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-         await pipe.WaitForConnectionAsync();
-         Console.WriteLine("[server] Pipe client connected");
-         await server.RunOnStreamAsync(pipe, pipe);
-         Console.WriteLine("[server] Pipe client disconnected");
-      }
    }
 
    /// <summary>

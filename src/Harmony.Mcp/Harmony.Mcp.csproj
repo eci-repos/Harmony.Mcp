@@ -20,10 +20,19 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
+   <ItemGroup>
+      <!-- This is the critical line -->
+      <FrameworkReference Include="Microsoft.AspNetCore.App" />
+   </ItemGroup>
+
+   <ItemGroup>
     <PackageReference Include="Harmony.Format.Core" Version="1.0.1" />
     <PackageReference Include="Harmony.Format.SemanticKernel" Version="1.0.1" />
     <PackageReference Include="Harmony.SemanticKernel.Core" Version="1.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Core" Version="2.3.6" />
   </ItemGroup>
 
 </Project>
