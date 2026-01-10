@@ -1,5 +1,4 @@
 ﻿using Harmony.Mcp.Models;
-using Harmony.Mcp.Server.Protocols;
 using Harmony.SemanticKernel.Core;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +11,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Harmony.Mcp.Hrf.Protocols;
 
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Server.Hosting;

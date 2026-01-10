@@ -1,5 +1,7 @@
-﻿using Harmony.Mcp.Server.Protocols;
+﻿using Harmony.Mcp.Hrf.Protocols;
 using Harmony.SemanticKernel.Core;
+using Harmony.Mcp.Server;
+
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -9,7 +11,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 // -------------------------------------------------------------------------------------------------
-namespace Harmony.Mcp.Server.Tools;
+namespace Harmony.Mcp.Hrf.Tools;
 
 /// <summary>
 /// Represents the input data required to register or validate an HRF (Human-Readable Format) 
@@ -205,6 +207,7 @@ internal class HrfScriptRegistrationTool
 
                input.Validate();
                RequestResult response = input.ParseAndRegister(registry, scripts);
+               return response;
             }
          );
 

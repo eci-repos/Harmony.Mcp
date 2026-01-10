@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 
 // -------------------------------------------------------------------------------------------------
-namespace Harmony.Mcp.Server.Protocols;
+namespace Harmony.Mcp.Hrf.Protocols;
 
 internal static class HrfValidator
 {

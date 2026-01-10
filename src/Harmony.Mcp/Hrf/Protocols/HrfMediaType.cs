@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Harmony.Mcp.Server.Protocols;
+namespace Harmony.Mcp.Hrf.Protocols;
 
 // -------------------------------------------------------------------------------------------------
 internal class HrfMediaType

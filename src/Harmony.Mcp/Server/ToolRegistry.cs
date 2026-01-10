@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Harmony.Mcp.Hrf.Tools;
 
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Server;
@@ -73,7 +74,7 @@ public sealed class ToolRegistry
       registry.AddTool(Tools.ChatCompletionTool.GetTool(config!, kernelHost));
 
       // Register and Validate HRF scripts
-      registry.AddTool(Tools.HrfScriptRegistrationTool.GetTool(registry, ScriptRegistry));
+      registry.AddTool(HrfScriptRegistrationTool.GetTool(registry, ScriptRegistry));
 
       // Example: run an SK workflow (kept)
       registry.AddTool(Tools.WorkflowRunnerTool.GetTool(config!, kernelHost));

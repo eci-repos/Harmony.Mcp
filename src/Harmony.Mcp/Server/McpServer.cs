@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Harmony.Mcp.Server.Protocols;
+using Harmony.Mcp.Hrf.Protocols;
 
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Server;

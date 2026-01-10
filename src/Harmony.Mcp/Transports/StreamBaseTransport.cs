@@ -1,4 +1,4 @@
-﻿using Harmony.Mcp.Server.Protocols;
+﻿using Harmony.Mcp.Hrf.Protocols;
 using Harmony.SemanticKernel.Core;
 using System;
 using System.Buffers;
