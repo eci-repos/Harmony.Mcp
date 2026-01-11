@@ -1,5 +1,6 @@
 ﻿using Harmony.Mcp.Models;
 using Harmony.Mcp.Transports;
+using Harmony.SemanticKernel.Core;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -138,6 +139,61 @@ public sealed class McpClient : IDisposable
    {
       try { _cts.Cancel(); } catch { }
       _transport.Dispose();
+   }
+
+   /// <summary>
+   /// Initializes and returns an McpClient based on the provided arguments.
+   /// </summary>
+   /// <param name="args"></param>
+   /// <param name="transport"></param>
+   /// <returns></returns>
+   /// <exception cref="ArgumentException"></exception>
+   public static async Task<McpClient?> GetClient(string[] args, IMcpTransport? transport = null)
+   {
+      var options = McpJson.Options;
+      IMcpTransport mcpTransport;
+
+      // Note that if spawn mode is used, the server must be started separately
+      // (e.g. via McpServerProcess.SpawnServerForStdio)
+      bool spawnMode = args.Length == 0;
+      if (spawnMode || args.Contains("stdio"))
+      {
+         // spawn server as child process
+         //string[] serverArgs = new string[] { "server-stdio" };
+         //McpServerProcess.SpawnServerForStdioSameExe(
+         //   serverArgs, new Dictionary<string, string?>());
+
+         // prepare stdio transport
+         mcpTransport = transport ?? McpTransports.StdioConnect();
+      }
+      else
+      {
+         // Connect transport based on args.
+         mcpTransport = args[0] switch
+         {
+            "tcp" when args.Length >= 3 && int.TryParse(args[2], out var p) =>
+               await McpTransports.TcpConnectAsync(args[1], p),
+            "pipe" when args.Length >= 2 => await McpTransports.NamedPipeConnectAsync(args[1]),
+            _ => throw new ArgumentException(
+               "Invalid args. Use: tcp <host> <port> | pipe <name> | stdio")
+         };
+      }
+
+      using var client = new McpClient(McpJson.Options, mcpTransport);
+
+      // Handshake
+      var init = await client.InitializeAsync();
+      if (init.ServerInfo == null)
+      {
+         KernelIO.Log.WriteLine("Failed to initialize MCP client: no server info.");
+         return null;
+      }
+
+      KernelIO.Log.WriteLine(
+         $"Initialized: {init.ServerInfo.Name} v{init.ServerInfo.Version} "
+        + "(proto {init.ProtocolVersion})\n");
+
+      return client;
    }
 
 }
