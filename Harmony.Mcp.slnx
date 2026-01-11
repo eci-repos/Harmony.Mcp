@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/samples/">
     <Project Path="samples/Harmony.Mcp.ClientConsole/Harmony.Mcp.ClientConsole.csproj" />
+    <Project Path="samples/Harmony.Mcp.HrfClientConsole/Harmony.Mcp.HrfClientConsole.csproj" Id="da73a094-754f-4775-868f-d72f31ef9124" />
     <Project Path="samples/Harmony.Mcp.HrfTestLibrary/Harmony.Mcp.HrfTestLibrary.csproj" Id="3600ac08-62a0-4049-8172-a42f57174ed7" />
     <Project Path="samples/Harmony.Mcp.ServerConsole/Harmony.Mcp.ServerConsole.csproj" />
   </Folder>

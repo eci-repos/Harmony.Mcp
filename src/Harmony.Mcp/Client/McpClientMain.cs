@@ -17,30 +17,13 @@ public class McpClientMain
 {
 
    /// <summary>
-   /// The entry point of the application. Initializes the MCP client, interacts with the MCP 
-   /// server, and demonstrates various tool calls based on the provided arguments.
+   /// Initializes and returns an McpClient based on the provided arguments.
    /// </summary>
-   /// <remarks>This method performs the following operations:
-   /// <list type="bullet">
-   ///    <item>
-   ///       <description>Initializes the MCP client and connects to the server.</description>
-   ///    </item>
-   ///    <item>
-   ///       <description>Lists available tools on the server and displays their descriptions.
-   ///       </description>
-   ///    </item>
-   ///    <item>
-   ///       <description>Demonstrates example calls to tools such as "time.now", "math.add", 
-   ///          "chat.complete", and "workflow.run" if they are available.</description>
-   ///    </item>
-   /// </list>
-   /// The method uses UTF-8 encoding for console output and supports both "spawn" and "attach" 
-   /// modes for interacting with the MCP server.</remarks>
-   /// <param name="args">Command-line arguments. The first argument specifies the mode of 
-   /// operation, which can be  "spawn" (default) or "attach". Additional arguments are passed to 
-   /// the MCP client for processing.</param>
-   /// <returns>A task that represents the asynchronous operation.</returns>
-   public static async Task<int> Main(string[] args, IMcpTransport? transport)
+   /// <param name="args"></param>
+   /// <param name="transport"></param>
+   /// <returns></returns>
+   /// <exception cref="ArgumentException"></exception>
+   public static async Task<McpClient?> GetClient(string[] args, IMcpTransport? transport = null)
    {
       var options = McpJson.Options;
       IMcpTransport mcpTransport;
@@ -78,12 +61,45 @@ public class McpClientMain
       if (init.ServerInfo == null)
       {
          KernelIO.Log.WriteLine("Failed to initialize MCP client: no server info.");
-         return 1;
+         return null;
       }
 
       KernelIO.Log.WriteLine(
          $"Initialized: {init.ServerInfo.Name} v{init.ServerInfo.Version} "
         + "(proto {init.ProtocolVersion})\n");
+
+      return client;
+   }
+
+   /// <summary>
+   /// The entry point of the application. Initializes the MCP client, interacts with the MCP 
+   /// server, and demonstrates various tool calls based on the provided arguments.
+   /// </summary>
+   /// <remarks>This method performs the following operations:
+   /// <list type="bullet">
+   ///    <item>
+   ///       <description>Initializes the MCP client and connects to the server.</description>
+   ///    </item>
+   ///    <item>
+   ///       <description>Lists available tools on the server and displays their descriptions.
+   ///       </description>
+   ///    </item>
+   ///    <item>
+   ///       <description>Demonstrates example calls to tools such as "time.now", "math.add", 
+   ///          "chat.complete", and "workflow.run" if they are available.</description>
+   ///    </item>
+   /// </list>
+   /// The method uses UTF-8 encoding for console output and supports both "spawn" and "attach" 
+   /// modes for interacting with the MCP server.</remarks>
+   /// <param name="args">Command-line arguments. The first argument specifies the mode of 
+   /// operation, which can be  "spawn" (default) or "attach". Additional arguments are passed to 
+   /// the MCP client for processing.</param>
+   /// <returns>A task that represents the asynchronous operation.</returns>
+   public static async Task<int> Main(string[] args, IMcpTransport? transport)
+   {
+      var client = await GetClient(args, transport);
+      if (client == null)
+         return 1;
 
       // Discover tools
       var tools = await client.ListToolsAsync();

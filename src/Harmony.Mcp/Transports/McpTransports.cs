@@ -38,4 +38,9 @@ public static class McpTransports
       return new StreamTransport(read, write);
    }
 
+   public static IMcpTransport CreateInMemoryTransport()
+   {
+      return new InMemoryTransport();
+   }
+
 }

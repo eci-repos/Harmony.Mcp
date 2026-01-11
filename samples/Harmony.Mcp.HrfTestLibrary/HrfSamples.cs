@@ -13,6 +13,18 @@ namespace Harmony.Mcp.HrfTestLibrary;
 /// </summary>
 public static class HrfSamples
 {
+
+   /// <summary>
+   /// Demonstrates the process of validating, registering, and invoking responses from an HRF 
+   /// script using the specified MCP client.
+   /// </summary>
+   /// <remarks>This example method shows how to validate an HRF script before registration, 
+   /// register the script with overwrite enabled, and call specific response tools 
+   /// ('summary' and 'details') using the HRF client. Output is written to the log for each step.
+   /// This method is intended for demonstration or testing purposes.</remarks>
+   /// <param name="client">The MCP client instance used to communicate with the HRF service. 
+   /// Cannot be null.</param>
+   /// <returns>A task that represents the asynchronous operation.</returns>
    public static async Task RunExampleAsync(McpClient client)
    {
       var hrf = new HrfClient(client);
