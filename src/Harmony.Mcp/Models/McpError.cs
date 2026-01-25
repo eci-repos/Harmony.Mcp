@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Models;
 
-public sealed class McpError
+public class McpError
 {
    [JsonPropertyName("code")] public int Code { get; set; }
    [JsonPropertyName("message")] public string? Message { get; set; }

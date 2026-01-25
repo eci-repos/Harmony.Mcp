@@ -14,6 +14,16 @@ using Harmony.Mcp.Hrf.Tools;
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Server;
 
+/// <summary>
+/// Provides a registry for managing and invoking AI-centric tools, including support for 
+/// registering HRF scripts and integrating with a semantic kernel host.
+/// </summary>
+/// <remarks>ToolRegistry enables dynamic addition and listing of tools, as well as safe invocation
+/// of registered tool handlers with JSON arguments. It is designed for extensibility in AI 
+/// workflows, allowing integration of custom tools and scripts. The registry supports 
+/// case-insensitive tool names and maintains a static in-memory store for HRF scripts. Thread 
+/// safety is not guaranteed for instance members; external synchronization may be required in
+/// concurrent scenarios.</remarks>
 public sealed class ToolRegistry
 {
    private readonly Dictionary<string, McpTool> _tools = new(StringComparer.OrdinalIgnoreCase);

@@ -17,6 +17,9 @@ using System.Threading.Tasks;
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Client;
 
+/// <summary>
+/// Mcp Client.
+/// </summary>
 public sealed class McpClient : IDisposable
 {
    private readonly JsonSerializerOptions _jsonSerializerOptions; 
@@ -26,7 +29,6 @@ public sealed class McpClient : IDisposable
       ConcurrentDictionary<string, TaskCompletionSource<McpRpcResponse>> _pending = new();
    private readonly CancellationTokenSource _cts = new();
 
-
    public McpClient(JsonSerializerOptions jsonSerializerOptions, IMcpTransport transport)
    {
       _jsonSerializerOptions = jsonSerializerOptions; 
@@ -34,6 +36,12 @@ public sealed class McpClient : IDisposable
       _ = Task.Run(ReadLoopAsync);
    }
 
+   private string NextId() => Interlocked.Increment(ref _idCounter).ToString();
+
+   /// <summary>
+   /// Initializes the MCP client by sending an "initialize" request to the remote MCP service.
+   /// </summary>
+   /// <returns></returns>
    public async Task<McpInitializeResult> InitializeAsync()
    {
       var req = new McpRpcRequest 
@@ -47,6 +55,11 @@ public sealed class McpClient : IDisposable
       return result!.Value.Deserialize<McpInitializeResult>(_jsonSerializerOptions)!;
    }
 
+   /// <summary>
+   /// Asynchronously retrieves a list of available tools from the remote MCP service.
+   /// </summary>
+   /// <returns>A read-only list of <see cref="McpToolDescriptor"/> objects representing the
+   /// available tools. The list will be empty if no tools are available.</returns>
    public async Task<IReadOnlyList<McpToolDescriptor>> ListToolsAsync()
    {
       var req = new McpRpcRequest 
@@ -62,6 +75,20 @@ public sealed class McpClient : IDisposable
          Deserialize<List<McpToolDescriptor>>(_jsonSerializerOptions)!;
    }
 
+   /// <summary>
+   /// Invokes a remote tool or method asynchronously and deserializes the result to the specified
+   /// type.
+   /// </summary>
+   /// <remarks>The method serializes the provided arguments and sends a request to the remote
+   /// endpoint. The result is expected to be present in the 'result' property of the response. 
+   /// Ensure that the response can be deserialized to the specified type parameter.</remarks>
+   /// <typeparam name="T">The type to which the result will be deserialized.</typeparam>
+   /// <param name="name">The name of the remote tool or method to invoke. Cannot be null or 
+   /// empty.</param>
+   /// <param name="args">A JSON element containing the arguments to pass to the remote tool or
+   /// method.</param>
+   /// <returns>A task that represents the asynchronous operation. The task result contains the
+   /// deserialized result of the remote call.</returns>
    public async Task<T> CallAsync<T>(string name, JsonElement args)
    {
       var payload = new McpCallToolParams { Name = name, Arguments = args };
@@ -95,6 +122,15 @@ public sealed class McpClient : IDisposable
          return await tcs.Task.ConfigureAwait(false);
    }
 
+   /// <summary>
+   /// Continuously reads messages from the transport layer and processes incoming responses or 
+   /// notifications until cancellation is requested.
+   /// </summary>
+   /// <remarks>If an exception occurs during reading or processing, all pending requests are 
+   /// completed with the exception. This method is intended to be run in the background to handle 
+   /// incoming messages for the lifetime of the connection.</remarks>
+   /// <returns>A task that represents the asynchronous read loop operation. The task completes
+   /// when the loop exits, either due to cancellation or an error.</returns>
    private async Task ReadLoopAsync()
    {
       try
@@ -133,8 +169,12 @@ public sealed class McpClient : IDisposable
       }
    }
 
-   private string NextId() => Interlocked.Increment(ref _idCounter).ToString();
-
+   /// <summary>
+   /// Releases all resources used by the current instance.
+   /// </summary>
+   /// <remarks>Call this method when you are finished using the instance to free unmanaged 
+   /// resources and perform other cleanup operations. After calling this method, the instance 
+   /// should not be used.</remarks>
    public void Dispose()
    {
       try { _cts.Cancel(); } catch { }

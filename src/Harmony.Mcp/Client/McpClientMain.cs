@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Client;
 
-public class McpClientMain
+public class McpClientMain : IClientMain
 {
 
    /// <summary>
@@ -40,11 +40,12 @@ public class McpClientMain
    /// operation, which can be  "spawn" (default) or "attach". Additional arguments are passed to 
    /// the MCP client for processing.</param>
    /// <returns>A task that represents the asynchronous operation.</returns>
-   public static async Task<int> Main(string[] args, IMcpTransport? transport)
+   public async Task<McpResultLog> Main(string[]? args, IMcpTransport? transport = null)
    {
-      var client = await McpClient.GetClient(args, transport);
+      var client = await McpClient.GetClient(
+         args == null ? Array.Empty<string>() : args, transport);
       if (client == null)
-         return 1;
+         return McpResultLog.GetLog(1);
 
       // Discover tools
       var tools = await client.ListToolsAsync();
@@ -95,7 +96,7 @@ public class McpClientMain
          if (simRes.results == null || simRes.results.Length == 0)
          {
             KernelIO.Log.WriteLine("semantic.similarity => no results");
-            return 0;
+            return McpResultLog.Suceeded();
          }
 
          KernelIO.Log.WriteLine("\nsemantic.similarity (top results):");
@@ -125,7 +126,7 @@ public class McpClientMain
       }
 
       KernelIO.Log.WriteLine("\nDone.");
-      return 0;
+      return McpResultLog.Suceeded();
    }
 
    /// <summary>
