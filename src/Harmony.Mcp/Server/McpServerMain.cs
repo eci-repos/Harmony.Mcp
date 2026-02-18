@@ -22,7 +22,15 @@ namespace Harmony.Mcp.Server;
 public class McpServerMain
 {
 
-   public static async Task<int> Main(string[] args)
+   /// <summary>
+   /// Main entry point for the MCP Server application. Initializes the kernel host, registers 
+   /// AI-centric tools, and starts the server based on provided arguments for transport options 
+   /// (TCP, named pipe, HTTPS/HTTP). Defaults to a single stdio connection if no transport arguments
+   /// are provided.
+   /// </summary>
+   /// <param name="args"></param>
+   /// <returns></returns>
+   public static async Task<McpResultLog> Main(string[] args)
    {
       Console.OutputEncoding = Encoding.UTF8;
       Console.InputEncoding = Encoding.UTF8;
@@ -68,50 +76,42 @@ public class McpServerMain
 
       var server = new McpServer(kernelHost, jsonOptions, registry);
 
-      // HTTPS/HTTP mode
-      if (httpsBind != null)
+      McpResultLog result = new McpResultLog();
+      try
       {
-         await McpServerHttp.RunHttpAsync(server, httpsBind, jsonOptions);
-         return 0;
-      }
-      if (tcpBind != null)
+         // HTTPS/HTTP mode
+         if (httpsBind != null)
+         {
+            await McpServerHttp.RunHttpAsync(server, httpsBind, jsonOptions);
+         }
+         if (tcpBind != null)
+         {
+            await McpServerTcp.RunTcpAsync(server, tcpBind);
+         }
+         if (pipeName != null)
+         {
+            await McpServerPipe.RunPipeAsync(server, pipeName);
+         }
+
+         // Default: single stdio connection
+         await server.RunStdIoAsync();
+      }      
+      catch (Exception ex)
       {
-         await McpServerTcp.RunTcpAsync(server, tcpBind);
-         return 0;
-      }
-      if (pipeName != null)
-      {
-         await McpServerPipe.RunPipeAsync(server, pipeName);
-         return 0;
+         KernelIO.Error.WriteLine($"Error starting MCP Server: {ex.Message}");
+         return result.Failed(message: $"Failed to start server: {ex.Message}");
       }
 
-      // Default: single stdio connection
-
-      await server.RunStdIoAsync();
-
-      return 0;
+      return result.Succeeded();
    }
 
    /// <summary>
    /// MCP server entry point for hosting via McpHostProcess.
    /// </summary>
    /// <param name="args">arguments</param>
-   public static async Task McpServerRun(string[] args)
+   public static async Task<McpResultLog> McpServerRun(string[] args)
    {
-      try
-      {
-         var task = await McpServerMain.Main(args);
-      }
-      catch (AggregateException ae)
-      {
-         KernelIO.Error.WriteLine(ae.Flatten().Message);
-         Environment.Exit(1);
-      }
-      catch (Exception ex)
-      {
-         KernelIO.Error.WriteLine(ex.Message);
-         Environment.Exit(1);
-      }
+      return await McpServerMain.Main(args);
    }
 
 }

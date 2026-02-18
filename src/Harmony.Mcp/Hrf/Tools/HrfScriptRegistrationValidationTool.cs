@@ -13,13 +13,6 @@ using System.Threading.Tasks;
 // -------------------------------------------------------------------------------------------------
 namespace Harmony.Mcp.Hrf.Tools;
 
-/// <summary>
-/// Represents the input data required to register or validate an HRF (Human-Readable Format) 
-/// script, including script content, identifier, and registration options.
-/// </summary>
-/// <remarks>This type is used to encapsulate all information necessary for HRF script registration 
-/// workflows, such as script validation, content type specification, and overwrite behavior. It is
-/// intended for internal use within the registration and tool creation process.</remarks>
 internal class HrfScriptRegistrationInput
 {
    public string Id { get; set; } = string.Empty;
@@ -44,6 +37,11 @@ internal class HrfScriptRegistrationInput
       return input;
    }
 
+   /// <summary>
+   /// Validate the HRF script content and content-type header. This is a conservative check to 
+   /// catch common issues
+   /// </summary>
+   /// <returns>RequestResult instance is returned</returns>
    public RequestResult Validate()
    {
       // Conservative content-type/body validation (uses Protocols.HrfValidator)
@@ -54,122 +52,34 @@ internal class HrfScriptRegistrationInput
       return RequestResult.Okey(null);
    }
 
-   private void CreateToolsForResponses(
-      ToolRegistry registry, Dictionary<string,string> scripts)
-   {
-      // Parse script again to create tools for each response
-      using var scriptDoc = JsonDocument.Parse(Script);
-      var rootEl = scriptDoc.RootElement;
-      var responses = rootEl.GetProperty("responses");
-      foreach (var r in responses.EnumerateArray())
-      {
-         var respName = r.GetProperty("name").GetString()!;
-         var contentElement = r.GetProperty("content");
-         var contentRaw = contentElement.GetRawText(); // capture raw text for closure
-         var toolName = $"{Id}.{respName}";
-         // If tool already exists and overwrite==false, skip or fail — here we
-         // overwrite the tool registration.  Create a minimal input schema
-         // (no inputs required).
-         var toolSchema = JsonDocument.Parse(@"{ ""type"": ""object"" }");
-         registry.AddTool(
-            new McpTool(
-               name: toolName,
-               description: $"HRF response tool ({Id}/{respName})",
-               inputSchema: toolSchema,
-               handler: async (p, ctoken) =>
-               {
-                  // Return content as parsed JSON element or string
-                  // depending on original kind
-                  try
-                  {
-                     using var elDoc = JsonDocument.Parse(contentRaw);
-                     var elem = elDoc.RootElement;
-                     object? data;
-                     if (elem.ValueKind == JsonValueKind.String)
-                        data = elem.GetString();
-                     else
-                        data = elem; // return JsonElement for structured content
-                     return RequestResult.Okey(
-                        new { id = Id, name = respName, content = data });
-                  }
-                  catch (JsonException)
-                  {
-                     // Fallback: return raw string if parsing fails
-                     return RequestResult.Okey(
-                        new { id = Id, name = respName, content = contentRaw });
-                  }
-               }
-            )
-         );
-      }
-   }
-
    /// <summary>
-   /// Public method to parse and register HRF script.
+   /// Simple registration of an HRF script. Stores the raw script text in the supplied dictionary 
+   /// using the provided Id as the key.
    /// </summary>
-   /// <param name="registry">Tool Registry</param>
-   /// <param name="scripts">register dictionary (name / value)</param>
-   /// <returns>RequestResult instance with reults info</returns>
-   public RequestResult ParseAndRegister(ToolRegistry registry, Dictionary<string,string> scripts)
+   /// <param name="registry">ToolRegistry instance, not used in current implementation but may be
+   /// useful for future extensions</param>
+   /// <param name="scripts">HRF script to validate and register</param>
+   /// <returns>RequestResult instance is returned</returns>
+   public RequestResult RegisterScript(ToolRegistry registry, Dictionary<string,string> scripts)
    {
-      JsonDocument? scriptDoc = null;
       try
       {
-         scriptDoc = JsonDocument.Parse(Script);
-         var rootEl = scriptDoc.RootElement;
-
-         // Basic structural validation: require 'responses' array
-         if (!rootEl.TryGetProperty("responses", out var responses) ||
-             responses.ValueKind != JsonValueKind.Array)
-         {
-            return RequestResult.Fail(
-               "HRF script must contain a top-level 'responses' array.");
-         }
-
-         // Quick uniqueness check for response names
-         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-         foreach (var r in responses.EnumerateArray())
-         {
-            if (!r.TryGetProperty("name", out var nm) ||
-                nm.ValueKind != JsonValueKind.String)
-               return RequestResult.Fail(
-                  "Each response must include a string 'name' property.");
-            var respName = nm.GetString()!;
-            if (!names.Add(respName))
-               return RequestResult.Fail($"Duplicate response name: {respName}");
-         }
-
          if (ValidateOnly)
          {
-            return RequestResult.Okey(
-               new 
-               { 
-                  Id, 
-                  validated = true,
-                  responsesCount = names.Count
-               });
+            return RequestResult.Okey(new { Id, validated = true });
          }
 
-         // Registration: store script and create per-response tools
          if (scripts.ContainsKey(Id) && !Overwrite)
             return RequestResult.Fail(
                $"Script with id '{Id}' already exists. Use overwrite=true to replace.");
 
          scripts[Id] = Script;
 
-         // Create tools for each response
-         CreateToolsForResponses(registry, scripts);
-
-         return RequestResult.Okey(
-            new { id = Id, validated = true, responseCount = names.Count });
+         return RequestResult.Okey(new { id = Id, registered = true });
       }
-      catch (JsonException ex)
+      catch (Exception ex)
       {
-         return RequestResult.Fail("Script is not valid JSON: " + ex.Message);
-      }
-      finally
-      {
-         scriptDoc?.Dispose();
+         return RequestResult.Fail("Registration failed: " + ex.Message);
       }
    }
 
@@ -186,8 +96,7 @@ internal class HrfScriptRegistrationTool
       return
          new McpTool(
             name: "hrf.register",
-            description: "Validate and (optionally) register an HRF script. Creates per-response "
-                       + "tools named '{id}.{responseName}'.",
+            description: "Validate and (optionally) register an HRF script for later retrieval.",
             inputSchema: JsonDocument.Parse(@"{
                ""type"": ""object"",
                ""properties"": {
@@ -206,7 +115,7 @@ internal class HrfScriptRegistrationTool
                var input = HrfScriptRegistrationInput.FromJsonElement(payload.RootElement);
 
                input.Validate();
-               RequestResult response = input.ParseAndRegister(registry, scripts);
+               RequestResult response = input.RegisterScript(registry, scripts);
                return response;
             }
          );

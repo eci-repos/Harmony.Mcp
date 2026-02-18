@@ -86,6 +86,15 @@ public sealed class ToolRegistry
       // Register and Validate HRF scripts
       registry.AddTool(HrfScriptRegistrationTool.GetTool(registry, ScriptRegistry));
 
+      // Tool to list registered HRF script ids
+      registry.AddTool(HrfScriptListTool.GetTool(registry, ScriptRegistry));
+
+      // Tool to retrieve stored HRF scripts (by id)
+      registry.AddTool(HrfScriptGetItemTool.GetTool(registry, ScriptRegistry));
+
+      // Tool to delete registered HRF scripts
+      registry.AddTool(HrfScriptDeleteTool.GetTool(registry, ScriptRegistry));
+
       // Example: run an SK workflow (kept)
       registry.AddTool(Tools.WorkflowRunnerTool.GetTool(config!, kernelHost));
 

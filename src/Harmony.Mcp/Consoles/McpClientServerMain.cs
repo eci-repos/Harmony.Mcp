@@ -37,10 +37,26 @@ public class McpClientServerMain
       return server;
    }
 
+   /// <summary>
+   /// Determines whether the application should run in server mode based on the specified 
+   /// command-line arguments.
+   /// </summary>
+   /// <remarks>This method checks for the presence of specific arguments, such as 
+   /// 'MCP_SERVER_STDIO' or '-server', using a case-insensitive comparison to determine if server
+   /// mode should be enabled.</remarks>
+   /// <param name="args">An array of command-line argument strings to evaluate for server mode
+   /// indicators. Cannot be null.</param>
+   /// <returns>true if the arguments indicate server mode; otherwise, false.</returns>
+   public static bool IsServerMode(string[] args)
+   {
+      return args.Contains(MCP_SERVER_STDIO, StringComparer.OrdinalIgnoreCase) ||
+             args.Contains("-server", StringComparer.OrdinalIgnoreCase);
+   }
+
    public static async Task<McpResultLog> StartClientStdio(
       Process server, IClientMain client)
    {
-      McpResultLog resultLog = McpResultLog.Suceeded();
+      McpResultLog resultLog = new McpResultLog();
 
       try
       {
@@ -50,12 +66,11 @@ public class McpClientServerMain
          KernelIO.Log.WriteLine("MCP Client starting (stdio)...");
          using var transport = new ProcessTransport(server);
 
-         await client.Main(new[] { "stdio" }, transport);
-         resultLog = McpResultLog.Suceeded();
+         resultLog = await client.Main(new[] { "stdio" }, transport);
       }
       catch (Exception ex)
       {
-         resultLog = McpResultLog.Suceeded(1, $"MCP Client error: {ex}");
+         resultLog.Failed(1, $"MCP Client error: {ex}");
       }
       finally
       {
@@ -87,13 +102,15 @@ public class McpClientServerMain
    public static async Task<McpResultLog> StartClientServer(
       string[] args, IMcpTransport? transport = null, IClientMain? client = null)
    {
+      string func = "McpClientServerMain::StartClientServer";
 
       // --- 1) If this is the child/server process, run server and exit ---
       if (args.Contains(MCP_SERVER_STDIO, StringComparer.OrdinalIgnoreCase))
       {
-         KernelIO.Log.WriteLine("MCP Server (stdio) starting...");
+         var msg = $"{func}: MCP Server (stdio) starting with args: {string.Join(' ', args)}";
+         KernelIO.Log.WriteLine(msg);
          await McpServerMain.Main(args);
-         return McpResultLog.Suceeded();
+         return McpResultLog.Succeed(msg);
       }
 
       // --- 2) Otherwise we are the client host ---
@@ -107,6 +124,8 @@ public class McpClientServerMain
 
       if (useStdio)
       {
+         // Start the server as a child process with stdio transport, then start the client
+         // attached to it.
          Process server = StartServerStdio(new[] { MCP_SERVER_STDIO });
          if (client != null)
          {
@@ -116,15 +135,16 @@ public class McpClientServerMain
       else
       {
          // Non-stdio client modes (tcp/pipe/etc.) – no spawning; server is external.
-         KernelIO.Log.WriteLine("MCP Client starting...");
+         var msg = $"{func}: MCP Client starting with args: {string.Join(' ', args)}";
+         KernelIO.Log.WriteLine(msg);
          if (client != null)
          {
             _ = await client.Main(args, null);
          }
-         return McpResultLog.Suceeded();
+         return McpResultLog.Succeed(msg);
       }
 
-      return McpResultLog.Suceeded();
+      return McpResultLog.Succeed(String.Empty);
    }
 
 }

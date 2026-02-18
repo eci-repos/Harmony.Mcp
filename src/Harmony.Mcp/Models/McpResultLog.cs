@@ -33,7 +33,7 @@ public sealed class McpResultLog : McpError
 
    public McpResultLog Failed(int code = 1, string? message = null)
    {
-      Suceeded(code, null, null);
+      Succeed(code, null, null);
       LogEntry(this);
       return this;
    }
@@ -53,7 +53,7 @@ public sealed class McpResultLog : McpError
       return this;
    }
 
-   public static McpResultLog Suceeded(int code, string? message, object? data)
+   public static McpResultLog Succeed(int code, string? message, object? data)
    {
       McpResultLog log = new McpResultLog();
       log.Code = code;
@@ -62,6 +62,16 @@ public sealed class McpResultLog : McpError
       log.Success = log.Code == 0;
       log.Log.Add(log);
       return log;
+   }
+
+   public static McpResultLog Succeed(string? message, object? data = null)
+   {
+      return Succeed(0, message, data);
+   }
+
+   public static McpResultLog Succeed()
+   {
+      return Succeed(0, null, null);
    }
 
    public static McpResultLog GetLog(

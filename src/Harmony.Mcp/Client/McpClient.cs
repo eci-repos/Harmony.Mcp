@@ -219,7 +219,8 @@ public sealed class McpClient : IDisposable
          };
       }
 
-      using var client = new McpClient(McpJson.Options, mcpTransport);
+      // create client without disposing it here so the caller owns its lifetime
+      var client = new McpClient(McpJson.Options, mcpTransport);
 
       // Handshake
       var init = await client.InitializeAsync();

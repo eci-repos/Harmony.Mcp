@@ -34,6 +34,24 @@ public class HrfClient : IClientMain
          _Client = client;
       }
 
+      // Test HRF tool availability and functionality using the sample helpers.
+      try
+      {
+         var scripts = new List<string>() 
+         { 
+            HrfSamples.SampleDefaultHrfScript, 
+            "whatever" 
+         };
+
+         // Use the HrfTestLibrary examples to validate/register and call response tools.
+         await HrfSamples.RunExampleAsync(_Client);
+      }
+      catch (Exception ex)
+      {
+         Console.WriteLine("Error while testing HRF tools: " + ex);
+         return log.Failed(message: ex.Message);
+      }
+
       return log.Succeeded();
    }
 

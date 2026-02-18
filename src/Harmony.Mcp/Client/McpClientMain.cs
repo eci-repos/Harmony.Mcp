@@ -42,6 +42,8 @@ public class McpClientMain : IClientMain
    /// <returns>A task that represents the asynchronous operation.</returns>
    public async Task<McpResultLog> Main(string[]? args, IMcpTransport? transport = null)
    {
+      string func = "McpClientMain";
+
       var client = await McpClient.GetClient(
          args == null ? Array.Empty<string>() : args, transport);
       if (client == null)
@@ -92,11 +94,14 @@ public class McpClientMain : IClientMain
             }
          };
 
+         // Note: If the server supports it, you can set includeEmbeddings=true and get the
+         // embeddings
          var simRes = await McpHelper.SemanticSimilarityAsync(client, simReq, simDesc);
          if (simRes.results == null || simRes.results.Length == 0)
          {
-            KernelIO.Log.WriteLine("semantic.similarity => no results");
-            return McpResultLog.Suceeded();
+            var msg = $"{func}: semantic.similarity => no results " +
+               "(dimensions={simRes.dimensions}, top_k={simRes.top_k})";
+            return McpResultLog.Succeed(msg, null);
          }
 
          KernelIO.Log.WriteLine("\nsemantic.similarity (top results):");
@@ -125,8 +130,9 @@ public class McpClientMain : IClientMain
          KernelIO.Log.WriteLine($"workflow.run => {wf}");
       }
 
-      KernelIO.Log.WriteLine("\nDone.");
-      return McpResultLog.Suceeded();
+      string done = "Done.";
+      KernelIO.Log.WriteLine("\n" + done);
+      return McpResultLog.Succeed(done);
    }
 
    /// <summary>

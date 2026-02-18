@@ -27,7 +27,14 @@ public class ProcessTransport : StreamBaseTransport, IMcpTransport
 
    public new void Dispose()
    {
-      try { _writer?.Flush(); } catch { }
+      try 
+      { 
+         _writer?.Flush(); 
+      } 
+      catch (Exception ex)
+      { 
+
+      }
       // Do not dispose proc streams here; the Process owns them.
       // Optionally terminate child, if that’s your lifecycle policy.
    }
